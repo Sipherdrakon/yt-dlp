@@ -1,3 +1,6 @@
+import json
+
+from .theplatform import ThePlatformIE
 from ..utils import (
     ExtractorError,
     GeoRestrictedError,
@@ -6,8 +9,6 @@ from ..utils import (
     traverse_obj,
     update_url_query,
 )
-from .theplatform import ThePlatformIE
-import json
 
 class AENetworksBaseIE(ThePlatformIE):  # XXX: Do not subclass from concrete IE
     _BASE_URL_REGEX = r'''(?x)https?://
