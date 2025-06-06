@@ -8,7 +8,7 @@ from ..utils import (
     update_url_query,
     urlencode_postdata,
 )
-
+import json
 
 class AENetworksBaseIE(ThePlatformIE):  # XXX: Do not subclass from concrete IE
     _BASE_URL_REGEX = r'''(?x)https?://
@@ -203,19 +203,27 @@ class AENetworksIE(AENetworksBaseIE):
 
 class AENetworksListBaseIE(AENetworksBaseIE):
     def _call_api(self, resource, slug, brand, fields):
-        return self._download_json(
-            'https://yoga.appsvcs.aetnd.com/graphql',
-            slug, query={'brand': brand}, data=urlencode_postdata({
-                'query': '''{
+        # The original method sent URL-encoded data.
+        # The API now requires a standard JSON payload.
+        graphql_query = {
+            'query': '''{
   %s(slug: "%s") {
     %s
   }
 }''' % (resource, slug, fields),  # noqa: UP031
-            }))['data'][resource]
+        }
+        response_json = self._download_json(
+            'https://yoga.appsvcs.aetnd.com/graphql',
+            slug,
+            query={'brand': brand},
+            # Send the payload as a raw JSON string with the correct header
+            data=json.dumps(graphql_query).encode('utf-8'),
+            headers={'Content-Type': 'application/json'})
+        return response_json['data'][resource]
 
     def _real_extract(self, url):
         domain, slug = self._match_valid_url(url).groups()
-        _, brand = self._DOMAIN_MAP[domain]
+        _, brand, _ = self._DOMAIN_MAP[domain]
         playlist = self._call_api(self._RESOURCE, slug, brand, self._FIELDS)
         base_url = f'http://watch.{domain}'
 
