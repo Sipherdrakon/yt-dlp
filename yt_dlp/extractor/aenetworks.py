@@ -1,3 +1,5 @@
+import json
+
 from .theplatform import ThePlatformIE
 from ..utils import (
     ExtractorError,
@@ -8,7 +10,6 @@ from ..utils import (
     update_url_query,
     urlencode_postdata,
 )
-import json
 
 class AENetworksBaseIE(ThePlatformIE):  # XXX: Do not subclass from concrete IE
     _BASE_URL_REGEX = r'''(?x)https?://
@@ -203,23 +204,18 @@ class AENetworksIE(AENetworksBaseIE):
 
 class AENetworksListBaseIE(AENetworksBaseIE):
     def _call_api(self, resource, slug, brand, fields):
-        # The original method sent URL-encoded data.
-        # The API now requires a standard JSON payload.
-        graphql_query = {
-            'query': '''{
-  %s(slug: "%s") {
-    %s
-  }
-}''' % (resource, slug, fields),  # noqa: UP031
-        }
-        response_json = self._download_json(
-            'https://yoga.appsvcs.aetnd.com/graphql',
-            slug,
-            query={'brand': brand},
-            # Send the payload as a raw JSON string with the correct header
-            data=json.dumps(graphql_query).encode('utf-8'),
-            headers={'Content-Type': 'application/json'})
-        return response_json['data'][resource]
+            return self._download_json(
+                'https://yoga.appsvcs.aetnd.com/graphql',
+                slug, query={'brand': brand},
+                data=json.dumps({
+                    'query': '''{
+      %s(slug: "%s") {
+        %s
+      }
+    }''' % (resource, slug, fields),  # noqa: UP031
+                }).encode(),
+                headers={'Content-Type': 'application/json'}
+            )['data'][resource]
 
     def _real_extract(self, url):
         domain, slug = self._match_valid_url(url).groups()
