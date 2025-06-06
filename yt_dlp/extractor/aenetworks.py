@@ -1,6 +1,5 @@
 import json
 
-from .theplatform import ThePlatformIE
 from ..utils import (
     ExtractorError,
     GeoRestrictedError,
@@ -9,6 +8,7 @@ from ..utils import (
     traverse_obj,
     update_url_query,
 )
+from .theplatform import ThePlatformIE
 
 class AENetworksBaseIE(ThePlatformIE):  # XXX: Do not subclass from concrete IE
     _BASE_URL_REGEX = r'''(?x)https?://
@@ -208,9 +208,9 @@ class AENetworksListBaseIE(AENetworksBaseIE):
                 slug, query={'brand': brand},
                 data=json.dumps({
                     'query': '''{
-      %s(slug: "%s") {
+    %s(slug: "%s") {
         %s
-      }
+    }
     }''' % (resource, slug, fields),  # noqa: UP031
                 }).encode(),
                 headers={'Content-Type': 'application/json'},
